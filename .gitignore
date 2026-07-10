@@ -1,0 +1,55 @@
+# Nextflow
+.nextflow/
+.nextflow.log*
+work/
+results/
+test_results/
+*.pipeline_info/
+timeline*.html
+report*.html
+trace*.txt
+dag*.svg
+
+# Reference databases / large artefacts (never commit)
+*.dmnd
+*.npz
+*.hmm
+*.h3f
+*.h3i
+*.h3m
+*.h3p
+*.bt2
+*.bt2l
+nt.*
+kraken2_db/
+*/kraken2_mini/
+*/rdrpcatch_mini/
+
+# Sequencing data
+*.fastq
+*.fastq.gz
+*.fq
+*.fq.gz
+*.bam
+*.sam
+*.fa.gz
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# OS / editor
+.DS_Store
+*.swp
+.idea/
+.vscode/

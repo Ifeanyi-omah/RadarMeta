@@ -1,0 +1,38 @@
+name: base
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  # core
+  - python=3.11
+  - pip
+  - click>=8.1
+  - pandas>=2.2
+  - numpy>=1.26
+  - jinja2
+  - plotly
+  - pyyaml
+
+  # ML
+  - pytorch
+  - transformers
+  - prodigal
+
+  # bioinformatics
+  - fastp>=0.23
+  - multiqc>=1.22
+  - bowtie2
+  - samtools>=1.18
+  - kraken2>=2.1.3
+  - bracken>=2.9
+  - megahit
+  - spades
+  - seqkit
+  - diamond>=2.1
+  - blast
+  - hmmer
+
+  # rdrpcatch via pip
+  - pip:
+      - rdrpcatch

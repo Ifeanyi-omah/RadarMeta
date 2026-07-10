@@ -1,0 +1,41 @@
+# Curated list of pathogens of public health importance, one organism per line.
+# Match is case-insensitive against (a) the DIAMOND/BLAST sscinames field,
+# (b) the RdRpCATCH family field. Add or remove freely; this is the
+# operator's policy file, not a hard-coded list.
+
+# WHO R&D Blueprint priority pathogens
+Ebola virus
+Sudan virus
+Marburg virus
+Lassa virus
+Nipah virus
+Hendra virus
+Rift Valley fever virus
+Crimean-Congo hemorrhagic fever virus
+Middle East respiratory syndrome coronavirus
+Severe acute respiratory syndrome coronavirus 2
+SARS-related coronavirus
+Zika virus
+Mpox virus
+Monkeypox virus
+
+# Arboviruses of operational interest
+Dengue virus
+Chikungunya virus
+Yellow fever virus
+West Nile virus
+Usutu virus
+Japanese encephalitis virus
+Oropouche virus
+
+# Viral families to flag broadly
+Filoviridae
+Arenaviridae
+Henipavirus
+Nairoviridae
+Phenuiviridae
+
+# Avian flu / pandemic flu
+Influenza A virus
+H5N1
+H7N9

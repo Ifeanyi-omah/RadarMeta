@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+message: "If you use RadarMeta, please cite it as below."
+title: "RadarMeta: a reconciled, ML-augmented metagenomics classification pipeline for biosurveillance"
+authors:
+  - family-names: Omah
+    given-names: Ifeanyi
+    # orcid: "https://orcid.org/XXXX-XXXX-XXXX-XXXX"  # add your ORCID
+version: 0.1.0
+license: MIT
+repository-code: "https://github.com/Ifeanyi-omah/radarmeta"
+keywords:
+  - metagenomics
+  - pathogen-discovery
+  - nextflow
+  - biosurveillance
+  - RdRp
+preferred-citation:
+  type: article
+  title: "RadarMeta: a reconciled, ML-augmented metagenomics classification pipeline for biosurveillance"
+  authors:
+    - family-names: Omah
+      given-names: Ifeanyi
+  year: 2026
+  journal: bioRxiv
+  notes: "Preprint forthcoming."

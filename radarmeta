@@ -1,0 +1,147 @@
+#!/usr/bin/env python3
+"""
+radarmeta — piranha-style CLI wrapper around the Nextflow pipeline.
+
+Examples:
+    radarmeta run --samplesheet samples.csv --outdir results/
+    radarmeta run --from-contigs --samplesheet contigs.csv --outdir results/
+    radarmeta build-db --refs rdrps.faa --out rdrp_esm2.npz
+    radarmeta validate --samplesheet samples.csv
+"""
+
+from __future__ import annotations
+
+import os
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+import click
+
+PIPELINE_DIR = Path(__file__).resolve().parent
+VERSION = '0.1.0'
+
+
+# ---------- top level group ----------
+@click.group(context_settings={'help_option_names': ['-h', '--help']})
+@click.version_option(VERSION, prog_name='radarmeta')
+def cli():
+    """RadarMeta — reconciled, ML-augmented metagenomics classification."""
+
+
+# ---------- run ----------
+@cli.command()
+@click.option('--samplesheet', type=click.Path(exists=True, dir_okay=False), required=True)
+@click.option('--outdir', type=click.Path(file_okay=False), default='./results', show_default=True)
+@click.option('--from-contigs', is_flag=True, help='Input is assembled contigs, not raw FASTQ')
+@click.option('--kraken2-db',     type=click.Path(exists=True, file_okay=False), envvar='RADARMETA_KRAKEN2_DB')
+@click.option('--host-grch38',    type=click.Path(), envvar='RADARMETA_HOST_GRCH38')
+@click.option('--rdrpcatch-db',   type=click.Path(exists=True, file_okay=False), envvar='RADARMETA_RDRPCATCH_DB')
+@click.option('--diamond-nr',     type=click.Path(exists=True, dir_okay=False), envvar='RADARMETA_DIAMOND_NR')
+@click.option('--blast-nt',       type=click.Path(),                            envvar='RADARMETA_BLAST_NT')
+@click.option('--esm2-embeddings',type=click.Path(exists=True, dir_okay=False), envvar='RADARMETA_ESM2_DB')
+@click.option('--profile', default='docker', show_default=True,
+              type=click.Choice(['standard', 'docker', 'singularity', 'slurm', 'test']))
+@click.option('--resume', is_flag=True)
+@click.option('--cpus', type=int, default=None)
+@click.option('--knn-min-cos-sim', type=float, default=0.65, show_default=True)
+@click.option('--dehost-verify-thresh', type=float, default=0.001, show_default=True,
+              help='Max allowed residual host fraction for human samples')
+@click.option('-w', '--work-dir', type=click.Path(), default='./work', show_default=True)
+def run(samplesheet, outdir, from_contigs, kraken2_db, host_grch38, rdrpcatch_db,
+        diamond_nr, blast_nt, esm2_embeddings, profile, resume, cpus,
+        knn_min_cos_sim, dehost_verify_thresh, work_dir):
+    """Run the full pipeline (or contigs-only mode with --from-contigs)."""
+    if not shutil.which('nextflow'):
+        click.secho("nextflow not found in PATH. Install: https://nextflow.io", fg='red', err=True)
+        sys.exit(1)
+
+    cmd = [
+        'nextflow', 'run', str(PIPELINE_DIR / 'main.nf'),
+        '-profile', profile,
+        '--samplesheet', samplesheet,
+        '--outdir', outdir,
+        '--knn_min_cos_sim', str(knn_min_cos_sim),
+        '--dehost_verify_thresh', str(dehost_verify_thresh),
+        '-work-dir', work_dir,
+    ]
+    if from_contigs:       cmd += ['--from_contigs', 'true']
+    if kraken2_db:         cmd += ['--kraken2_db', kraken2_db]
+    if host_grch38:        cmd += ['--host_grch38', host_grch38]
+    if rdrpcatch_db:       cmd += ['--rdrpcatch_db', rdrpcatch_db]
+    if diamond_nr:         cmd += ['--diamond_nr', diamond_nr]
+    if blast_nt:           cmd += ['--blast_nt', blast_nt]
+    if esm2_embeddings:    cmd += ['--esm2_embeddings', esm2_embeddings]
+    if resume:             cmd += ['-resume']
+
+    click.secho(f"running: {' '.join(cmd)}", fg='cyan')
+    env = os.environ.copy()
+    if cpus:
+        env['NXF_OPTS'] = f"-Dnxf.cpus={cpus}"
+    sys.exit(subprocess.call(cmd, env=env))
+
+
+# ---------- validate ----------
+@cli.command()
+@click.option('--samplesheet', type=click.Path(exists=True, dir_okay=False), required=True)
+@click.option('--from-contigs', is_flag=True)
+def validate(samplesheet, from_contigs):
+    """Validate a samplesheet without running the pipeline."""
+    subprocess.check_call([
+        sys.executable,
+        str(PIPELINE_DIR / 'bin' / 'validate_samplesheet.py'),
+        '--input', samplesheet,
+        '--output', '/dev/stdout',
+        '--from_contigs', 'true' if from_contigs else 'false',
+    ])
+
+
+# ---------- build-db ----------
+@cli.command('build-db')
+@click.option('--refs', type=click.Path(exists=True, dir_okay=False), required=True,
+              help='FASTA of curated viral RdRps (header: >ACC family=Picornaviridae)')
+@click.option('--out', type=click.Path(dir_okay=False), required=True,
+              help='Output .npz path')
+@click.option('--model', default='facebook/esm2_t12_35M_UR50D', show_default=True)
+def build_db(refs, out, model):
+    """Build the ESM-2 embedding reference DB for the ML novelty classifier."""
+    subprocess.check_call([
+        sys.executable,
+        str(PIPELINE_DIR / 'bin' / 'build_reference_db.py'),
+        '--refs', refs,
+        '--out', out,
+        '--model', model,
+    ])
+
+
+# ---------- inspect ----------
+@cli.command()
+@click.argument('results_dir', type=click.Path(exists=True, file_okay=False))
+def inspect(results_dir):
+    """Print a one-line summary per sample from a finished run."""
+    import json
+    rec = Path(results_dir) / '05_reconciled'
+    if not rec.exists():
+        click.secho(f"no 05_reconciled/ in {results_dir}", fg='red', err=True)
+        sys.exit(1)
+    for s in sorted(rec.iterdir()):
+        calls = s / f"{s.name}_calls.tsv"
+        alerts = s / f"{s.name}_alerts.json"
+        n_t1 = n_t2 = n_t3 = n_t4 = 0
+        if calls.exists():
+            for ln in calls.read_text().splitlines()[1:]:
+                tier = ln.split('\t')[2]
+                if tier == 'T1': n_t1 += 1
+                elif tier == 'T2': n_t2 += 1
+                elif tier == 'T3': n_t3 += 1
+                elif tier == 'T4': n_t4 += 1
+        n_alerts = 0
+        if alerts.exists():
+            n_alerts = len(json.loads(alerts.read_text()).get('alerts', []))
+        click.echo(f"{s.name:30s}  T1={n_t1:4d}  T2={n_t2:4d}  T3={n_t3:4d}  "
+                   f"T4={n_t4:4d}  alerts={n_alerts}")
+
+
+if __name__ == '__main__':
+    cli()

@@ -1,0 +1,6 @@
+sample_id,fastq_1,fastq_2,host_type,sample_class
+NIG_clin_001,/data/NIG_clin_001_R1.fastq.gz,/data/NIG_clin_001_R2.fastq.gz,human,clinical
+NIG_clin_002,/data/NIG_clin_002_R1.fastq.gz,/data/NIG_clin_002_R2.fastq.gz,human,clinical
+FLY_023,/data/FLY_023_R1.fastq.gz,/data/FLY_023_R2.fastq.gz,invertebrate,vector
+RAT_011,/data/RAT_011_R1.fastq.gz,/data/RAT_011_R2.fastq.gz,vertebrate,wildlife
+WW_005,/data/WW_005_R1.fastq.gz,/data/WW_005_R2.fastq.gz,none,wastewater

@@ -1,0 +1,19 @@
+# RadarMeta is a Nextflow pipeline (cloned and run, nf-core style), not a
+# PyPI package. This file configures the Python dev tooling used in CI and
+# records the Python dependencies the bin/ scripts rely on.
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = ["work", "results", "test_results"]
+
+[tool.ruff.lint]
+# Correctness-focused: pyflakes (F) catches undefined names, unused imports,
+# etc.; E4/E9 catch import and syntax errors. Deliberate one-line `if x: y`
+# style in the CLI is not flagged (E7 intentionally omitted).
+select = ["F", "E4", "E9"]
+ignore = ["E741"]  # ambiguous names (l, r) are fine in numeric code
