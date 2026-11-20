@@ -22,6 +22,12 @@ params.blast_nt        = null              // path to nt BLAST DB
 params.esm2_embeddings = null              // .npz of {ids, vectors, labels} for kNN
 params.pathogens_list  = "$projectDir/assets/pathogens_of_concern.tsv"
 
+// ICTV naming audit (optional; skipped unless --ictv_vmr is given)
+params.ictv_vmr        = null              // ICTV VMR .xlsx/.tsv
+params.ictv_release    = null              // override release label, e.g. MSL41
+params.name_history    = null              // TSV: old_name,new_name,rank,release
+params.literature_flags= null              // TSV of peer-reviewed literature flags
+
 // behaviour
 params.assembler           = 'megahit'     // 'megahit' or 'metaspades'
 params.dehost_verify_thresh= 0.001         // fraction host reads allowed after depletion
@@ -45,6 +51,7 @@ include { BLAST_NT             } from './modules/local/blast'
 include { ML_NOVELTY           } from './modules/local/ml_novelty'
 include { RECONCILE            } from './modules/local/reconcile'
 include { REPORT               } from './modules/local/report'
+include { NAMING_AUDIT         } from './modules/local/naming_audit'
 
 // ---------- workflow ----------
 workflow {
@@ -117,6 +124,18 @@ workflow {
         .join( ML_NOVELTY.out.calls )
 
     RECONCILE( ch_reconcile_in, file(params.pathogens_list) )
+
+    // ----- ICTV naming audit (optional) -----
+    if (params.ictv_vmr) {
+        ch_vmr  = Channel.value( file(params.ictv_vmr, checkIfExists: true) )
+        ch_hist = Channel.value( params.name_history
+                    ? file(params.name_history, checkIfExists: true)
+                    : file("$projectDir/assets/NO_FILE") )
+        ch_lit  = Channel.value( params.literature_flags
+                    ? file(params.literature_flags, checkIfExists: true)
+                    : file("$projectDir/assets/NO_FILE") )
+        NAMING_AUDIT( RECONCILE.out.calls, ch_vmr, ch_hist, ch_lit )
+    }
 
     // ----- report -----
     REPORT( RECONCILE.out.calls.collect() )

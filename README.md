@@ -108,7 +108,7 @@ Nextflow DSL2 with nf-core conventions gives container-native execution, HPC/clo
 ## Development
 
 ```bash
-pip install numpy pandas jinja2 click pytest ruff
+pip install numpy pandas jinja2 click openpyxl pytest ruff
 ruff check bin radarmeta tests   # correctness lint
 pytest                            # unit tests for the reconciliation + kNN logic
 ```
